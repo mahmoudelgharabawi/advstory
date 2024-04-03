@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:advstory/advstory.dart';
 import 'package:advstory/src/util/animated_border_painter.dart';
 import 'package:advstory/src/view/components/shimmer.dart';
@@ -30,6 +32,9 @@ class AdvStoryTray extends AnimatedTray {
     Key? key,
     required this.url,
     this.username,
+    this.numberOfStories,
+    this.spaceLength,
+    this.color,
     this.size = const Size(80, 80),
     this.shimmerStyle = const ShimmerStyle(),
     this.shape = BoxShape.circle,
@@ -91,6 +96,14 @@ class AdvStoryTray extends AnimatedTray {
   /// Rotate animation duration of the border.
   final Duration animationDuration;
 
+  /// color of dash
+  final Color? color;
+
+  ///number of stories
+  final int? numberOfStories;
+
+  ///length of the space arc (empty one)
+  final int? spaceLength;
   @override
   AnimatedTrayState<AdvStoryTray> createState() => _AdvStoryTrayState();
 }
@@ -168,37 +181,51 @@ class _AdvStoryTrayState extends AnimatedTrayState<AdvStoryTray>
           height: widget.size.height,
           child: Stack(
             children: [
-              CustomPaint(
-                painter: AnimatedBorderPainter(
-                  gradientColors: _gradientColors,
-                  gapSize: widget.gapSize,
-                  radius: widget.shape == BoxShape.circle
-                      ? widget.size.width
-                      : widget.borderRadius,
-                  strokeWidth: widget.strokeWidth,
-                  animation: CurvedAnimation(
-                    parent: Tween(begin: 0.0, end: 1.0).animate(
-                      _rotationController,
-                    ),
-                    curve: Curves.slowMiddle,
+              SizedBox(
+                width: widget.size.width,
+                height: widget.size.height,
+                child: CustomPaint(
+                  painter: DottedBorder(
+                    numberOfStories: widget.numberOfStories ?? 1,
+                    spaceLength: widget.spaceLength ?? 10,
+                    color: widget.color,
+                    strokeWidth: widget.strokeWidth,
                   ),
                 ),
-                child: SizedBox(
-                  width: widget.size.width,
-                  height: widget.size.height,
-                ),
               ),
+
+              // CustomPaint(
+              //   painter: AnimatedBorderPainter(
+              //     gradientColors: _gradientColors,
+              //     gapSize: widget.gapSize,
+              //     radius: widget.shape == BoxShape.circle
+              //         ? widget.size.width
+              //         : widget.borderRadius,
+              //     strokeWidth: widget.strokeWidth,
+              //     animation: CurvedAnimation(
+              //       parent: Tween(begin: 0.0, end: 1.0).animate(
+              //         _rotationController,
+              //       ),
+              //       curve: Curves.slowMiddle,
+              //     ),
+              //   ),
+              //   child: SizedBox(
+              //     width: widget.size.width,
+              //     height: widget.size.height,
+              //   ),
+              // ),
               Center(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(
-                    widget.borderRadius - (widget.strokeWidth + widget.gapSize),
+                    widget.borderRadius -
+                        (widget.strokeWidth! + widget.gapSize),
                   ),
                   child: Image.network(
                     widget.url,
                     width: widget.size.width -
-                        (widget.gapSize + widget.strokeWidth) * 2,
+                        (widget.gapSize + widget.strokeWidth!) * 2,
                     height: widget.size.height -
-                        (widget.gapSize + widget.strokeWidth) * 2,
+                        (widget.gapSize + widget.strokeWidth!) * 2,
                     fit: BoxFit.cover,
                     frameBuilder: (context, child, frame, _) {
                       return frame != null
@@ -234,5 +261,71 @@ class _AdvStoryTrayState extends AnimatedTrayState<AdvStoryTray>
         ],
       ],
     );
+  }
+}
+
+class DottedBorder extends CustomPainter {
+  //number of stories
+  final int numberOfStories;
+  //length of the space arc (empty one)
+  final int spaceLength;
+  final double? strokeWidth;
+  final Color? color;
+  //start of the arc painting in degree(0-360)
+  double startOfArcInDegree = 0;
+
+  DottedBorder(
+      {required this.numberOfStories,
+      this.spaceLength = 10,
+      this.strokeWidth = 5.0,
+      this.color = Colors.teal});
+
+  //drawArc deals with rads, easier for me to use degrees
+  //so this takes a degree and change it to rad
+  double inRads(double degree) {
+    return (degree * pi) / 180;
+  }
+
+  @override
+  bool shouldRepaint(DottedBorder oldDelegate) {
+    return true;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    //circle angle is 360, remove all space arcs between the main story arc (the number of spaces(stories) times the  space length
+    //then subtract the number from 360 to get ALL arcs length
+    //then divide the ALL arcs length by number of Arc (number of stories) to get the exact length of one arc
+    double arcLength =
+        (360 - (numberOfStories * spaceLength)) / numberOfStories;
+
+    //be careful here when arc is a negative number
+    //that happens when the number of spaces is more than 360
+    //feel free to use what logic you want to take care of that
+    //note that numberOfStories should be limited too here
+    if (arcLength <= 0) {
+      arcLength = 360 / spaceLength - 1;
+    }
+
+    Rect rect = Rect.fromLTWH(0, 0, size.width, size.height);
+
+    //looping for number of stories to draw every story arc
+    for (int i = 0; i < numberOfStories; i++) {
+      //printing the arc
+      canvas.drawArc(
+          rect,
+          inRads(startOfArcInDegree),
+          //be careful here is:  "double sweepAngle", not "end"
+          inRads(arcLength),
+          false,
+          Paint()
+            //here you can compare your SEEN story index with the arc index to make it grey
+            ..color = color!
+            ..strokeWidth = strokeWidth!
+            ..style = PaintingStyle.stroke);
+
+      //the logic of spaces between the arcs is to start the next arc after jumping the length of space
+      startOfArcInDegree += arcLength + spaceLength;
+    }
   }
 }

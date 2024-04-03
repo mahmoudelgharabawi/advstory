@@ -71,11 +71,15 @@ class ContentViewState extends State<ContentView> {
   /// percent of screen.
   void _handleTapUp(TapUpDetails event) {
     final viewWidth = _key.currentContext?.size?.width ?? width;
+    Locale myLocale = Localizations.localeOf(_key.currentContext!);
+    bool isArabic = myLocale.languageCode == 'ar';
     final x = event.localPosition.dx;
-
-    if (x > viewWidth * .77) {
+    bool goNextCondition = isArabic ? x < viewWidth * .77 : x > viewWidth * .77;
+    bool goPreviousCondition =
+        isArabic ? x > viewWidth * .23 : x < viewWidth * .23;
+    if (goNextCondition) {
       _provider!.controller.toNextContent();
-    } else if (x < viewWidth * .23) {
+    } else if (goPreviousCondition) {
       _provider!.controller.toPreviousContent();
     } else {
       _provider!.controller.resume();
