@@ -1,8 +1,9 @@
 import 'dart:math';
 
 import 'package:advstory/advstory.dart';
-import 'package:advstory/src/util/animated_border_painter.dart';
 import 'package:advstory/src/view/components/shimmer.dart';
+import 'package:cached_memory_image/cached_memory_image.dart';
+import 'package:dotted_box/dotted_box.dart';
 import 'package:flutter/material.dart';
 
 /// A highly customizable animated story tray.
@@ -31,6 +32,7 @@ class AdvStoryTray extends AnimatedTray {
   AdvStoryTray({
     Key? key,
     required this.url,
+    this.base64Url,
     this.username,
     this.numberOfStories,
     this.spaceLength,
@@ -66,6 +68,9 @@ class AdvStoryTray extends AnimatedTray {
 
   /// Image url that shown as tray.
   final String url;
+
+  /// base64Url.
+  final String? base64Url;
 
   /// Name of the user who posted the story. This username is displayed
   /// below the story tray.
@@ -181,73 +186,30 @@ class _AdvStoryTrayState extends AnimatedTrayState<AdvStoryTray>
           height: widget.size.height,
           child: Stack(
             children: [
-              SizedBox(
-                width: widget.size.width,
-                height: widget.size.height,
-                child: CustomPaint(
-                  painter: DottedBorder(
-                    numberOfStories: widget.numberOfStories ?? 1,
-                    spaceLength: widget.spaceLength ?? 10,
-                    color: widget.color,
-                    strokeWidth: widget.strokeWidth,
-                  ),
-                ),
-              ),
-
-              // CustomPaint(
-              //   painter: AnimatedBorderPainter(
-              //     gradientColors: _gradientColors,
-              //     gapSize: widget.gapSize,
-              //     radius: widget.shape == BoxShape.circle
-              //         ? widget.size.width
-              //         : widget.borderRadius,
-              //     strokeWidth: widget.strokeWidth,
-              //     animation: CurvedAnimation(
-              //       parent: Tween(begin: 0.0, end: 1.0).animate(
-              //         _rotationController,
-              //       ),
-              //       curve: Curves.slowMiddle,
-              //     ),
-              //   ),
-              //   child: SizedBox(
-              //     width: widget.size.width,
-              //     height: widget.size.height,
-              //   ),
-              // ),
-              Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(
-                    widget.borderRadius -
-                        (widget.strokeWidth! + widget.gapSize),
-                  ),
-                  child: Image.network(
-                    widget.url,
-                    width: widget.size.width -
-                        (widget.gapSize + widget.strokeWidth!) * 2,
-                    height: widget.size.height -
-                        (widget.gapSize + widget.strokeWidth!) * 2,
-                    fit: BoxFit.cover,
-                    frameBuilder: (context, child, frame, _) {
-                      return frame != null
-                          ? TweenAnimationBuilder<double>(
-                              tween: Tween<double>(begin: .1, end: 1),
-                              curve: Curves.ease,
-                              duration: const Duration(milliseconds: 300),
-                              builder:
-                                  (BuildContext context, double opacity, _) {
-                                return Opacity(
-                                  opacity: opacity,
-                                  child: child,
-                                );
-                              },
-                            )
-                          : Shimmer(style: widget.shimmerStyle);
-                    },
-                    errorBuilder: (_, __, ___) {
-                      return const Icon(Icons.error);
-                    },
-                  ),
-                ),
+              Padding(
+                padding: const EdgeInsets.all(2.0),
+                child: widget.numberOfStories == 1
+                    ? Container(
+                        width: widget.size.width,
+                        height: widget.size.height,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                              color: widget.color ?? Colors.green,
+                              width: widget.strokeWidth),
+                        ),
+                        child: _childContent,
+                      )
+                    : DottedBox(
+                        width: widget.size.width,
+                        height: widget.size.height,
+                        borderThickness: widget.strokeWidth,
+                        borderColor: widget.color,
+                        borderRadius: 20,
+                        space: widget.spaceLength ?? 10,
+                        borderShape: Shape.circle,
+                        dashCounts: widget.numberOfStories ?? 1,
+                        child: _childContent),
               ),
             ],
           ),
@@ -262,6 +224,68 @@ class _AdvStoryTrayState extends AnimatedTrayState<AdvStoryTray>
       ],
     );
   }
+
+  Widget get _childContent => Center(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(
+            widget.borderRadius - (widget.strokeWidth + widget.gapSize),
+          ),
+          child: widget.base64Url != null
+              ? CachedMemoryImage(
+                  width: widget.size.width -
+                      (widget.gapSize + widget.strokeWidth) * 2,
+                  height: widget.size.height -
+                      (widget.gapSize + widget.strokeWidth) * 2,
+                  fit: BoxFit.cover,
+                  uniqueKey: 'app/image',
+                  base64: widget.base64Url,
+                  frameBuilder: (context, child, frame, _) {
+                    return frame != null
+                        ? TweenAnimationBuilder<double>(
+                            tween: Tween<double>(begin: .1, end: 1),
+                            curve: Curves.ease,
+                            duration: const Duration(milliseconds: 300),
+                            builder: (BuildContext context, double opacity, _) {
+                              return Opacity(
+                                opacity: opacity,
+                                child: child,
+                              );
+                            },
+                          )
+                        : Shimmer(style: widget.shimmerStyle);
+                  },
+                  errorBuilder: (_, __, ___) {
+                    return const Icon(Icons.error);
+                  },
+                )
+              : Image.network(
+                  widget.url,
+                  width: widget.size.width -
+                      (widget.gapSize + widget.strokeWidth) * 2,
+                  height: widget.size.height -
+                      (widget.gapSize + widget.strokeWidth) * 2,
+                  fit: BoxFit.cover,
+                  frameBuilder: (context, child, frame, _) {
+                    return frame != null
+                        ? TweenAnimationBuilder<double>(
+                            tween: Tween<double>(begin: .1, end: 1),
+                            curve: Curves.ease,
+                            duration: const Duration(milliseconds: 300),
+                            builder: (BuildContext context, double opacity, _) {
+                              return Opacity(
+                                opacity: opacity,
+                                child: child,
+                              );
+                            },
+                          )
+                        : Shimmer(style: widget.shimmerStyle);
+                  },
+                  errorBuilder: (_, __, ___) {
+                    return const Icon(Icons.error);
+                  },
+                ),
+        ),
+      );
 }
 
 class DottedBorder extends CustomPainter {
@@ -311,6 +335,8 @@ class DottedBorder extends CustomPainter {
 
     //looping for number of stories to draw every story arc
     for (int i = 0; i < numberOfStories; i++) {
+      print('object:${startOfArcInDegree}');
+      print('object:${arcLength}');
       //printing the arc
       canvas.drawArc(
           rect,
@@ -322,7 +348,8 @@ class DottedBorder extends CustomPainter {
             //here you can compare your SEEN story index with the arc index to make it grey
             ..color = color!
             ..strokeWidth = strokeWidth!
-            ..style = PaintingStyle.stroke);
+            ..strokeCap = StrokeCap.round
+            ..style = PaintingStyle.fill);
 
       //the logic of spaces between the arcs is to start the next arc after jumping the length of space
       startOfArcInDegree += arcLength + spaceLength;

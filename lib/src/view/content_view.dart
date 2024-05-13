@@ -120,13 +120,13 @@ class ContentViewState extends State<ContentView> {
       if (header != null)
         Positioned(
           top: _provider!.style.indicatorStyle.height + 16,
-          left: 0,
+          right: 0,
           child: header,
         ),
       if (footer != null)
         Positioned(
           bottom: 0,
-          left: 0,
+          right: 0,
           child: footer,
         ),
     ];
