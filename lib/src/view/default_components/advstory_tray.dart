@@ -237,7 +237,7 @@ class _AdvStoryTrayState extends AnimatedTrayState<AdvStoryTray>
                   height: widget.size.height -
                       (widget.gapSize + widget.strokeWidth) * 2,
                   fit: BoxFit.cover,
-                  uniqueKey: 'app/image/${widget.url}',
+                  uniqueKey: 'app/image/${widget.base64Url}',
                   base64: widget.base64Url,
                   frameBuilder: (context, child, frame, _) {
                     return frame != null
