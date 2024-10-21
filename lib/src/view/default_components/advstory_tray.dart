@@ -33,6 +33,7 @@ class AdvStoryTray extends AnimatedTray {
     Key? key,
     required this.url,
     this.base64Url,
+    this.httpHeaders,
     this.username,
     this.numberOfStories,
     this.spaceLength,
@@ -71,6 +72,7 @@ class AdvStoryTray extends AnimatedTray {
 
   /// base64Url.
   final String? base64Url;
+  final Map<String, String>? httpHeaders;
 
   /// Name of the user who posted the story. This username is displayed
   /// below the story tray.
@@ -230,7 +232,7 @@ class _AdvStoryTrayState extends AnimatedTrayState<AdvStoryTray>
           borderRadius: BorderRadius.circular(
             widget.borderRadius - (widget.strokeWidth + widget.gapSize),
           ),
-          child: widget.base64Url != null
+          child: widget.base64Url != null && widget.base64Url!.isNotEmpty
               ? CachedMemoryImage(
                   width: widget.size.width -
                       (widget.gapSize + widget.strokeWidth) * 2,
@@ -260,6 +262,7 @@ class _AdvStoryTrayState extends AnimatedTrayState<AdvStoryTray>
                 )
               : Image.network(
                   widget.url,
+                  headers: widget.httpHeaders,
                   width: widget.size.width -
                       (widget.gapSize + widget.strokeWidth) * 2,
                   height: widget.size.height -
