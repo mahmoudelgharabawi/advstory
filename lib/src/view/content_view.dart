@@ -160,46 +160,49 @@ class ContentViewState extends State<ContentView> {
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          GestureDetector(
-            onLongPressDown: _handleDownPress,
-            onLongPressCancel: _provider!.controller.resume,
-            onLongPressUp: _provider!.controller.resume,
-            onLongPress: _provider!.controller.exactPause,
-            onTapUp: _handleTapUp,
-            onVerticalDragEnd: _handleVerticalDrag,
-            child: PageView.builder(
-              allowImplicitScrolling: _provider!.preloadContent,
-              controller: _pageController,
-              itemCount: widget.story.contentCount,
-              physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) {
-                final content = widget.story.contentBuilder(index);
+          Padding(
+            padding: const EdgeInsets.only(top: 25),
+            child: GestureDetector(
+              onLongPressDown: _handleDownPress,
+              onLongPressCancel: _provider!.controller.resume,
+              onLongPressUp: _provider!.controller.resume,
+              onLongPress: _provider!.controller.exactPause,
+              onTapUp: _handleTapUp,
+              onVerticalDragEnd: _handleVerticalDrag,
+              child: PageView.builder(
+                allowImplicitScrolling: _provider!.preloadContent,
+                controller: _pageController,
+                itemCount: widget.story.contentCount,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final content = widget.story.contentBuilder(index);
 
-                return Stack(
-                  children: [
-                    ContentPositionProvider(
-                      position: StoryPosition(index, widget.storyIndex),
-                      child: content,
-                    ),
-                    Scaffold(
-                      backgroundColor: Colors.transparent,
-                      body: SafeArea(
-                        top: _provider!.hasTrays,
-                        bottom: _provider!.hasTrays,
-                        child: FadeTransition(
-                          opacity: _provider!.controller.opacityController,
-                          child: Container(
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: _getComponents(content),
+                  return Stack(
+                    children: [
+                      ContentPositionProvider(
+                        position: StoryPosition(index, widget.storyIndex),
+                        child: content,
+                      ),
+                      Scaffold(
+                        backgroundColor: Colors.transparent,
+                        body: SafeArea(
+                          top: _provider!.hasTrays,
+                          bottom: _provider!.hasTrays,
+                          child: FadeTransition(
+                            opacity: _provider!.controller.opacityController,
+                            child: Container(
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: _getComponents(content),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
+                    ],
+                  );
+                },
+              ),
             ),
           ),
           SafeArea(
